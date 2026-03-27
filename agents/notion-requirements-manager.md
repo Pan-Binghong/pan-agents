@@ -72,55 +72,40 @@ curl -s -X POST "https://api.notion.com/v1/databases/2fe57052b4908022bde6f836bff
     end: .properties["结束日期"].date.start
   }'
 
-# Filter by status
+# Filter by status — use --data-binary with printf to ensure UTF-8 encoding on all platforms
+STATUS="进行中"
+printf '{"filter":{"property":"状态","status":{"equals":"%s"}}}' "$STATUS" | \
 curl -s -X POST "https://api.notion.com/v1/databases/2fe57052b4908022bde6f836bff39869/query" \
   -H "Authorization: Bearer $NOTION_API_TOKEN" \
   -H "Notion-Version: 2022-06-28" \
   -H "Content-Type: application/json" \
-  -d '{
-    "filter": {
-      "property": "状态",
-      "status": {"equals": "进行中"}
-    }
-  }' | jq '.results[] | {id, name: .properties["项目名称"].title[0].plain_text, status: .properties["状态"].status.name, priority: .properties["优先级"].select.name}'
+  --data-binary @- | jq '.results[] | {id, name: .properties["项目名称"].title[0].plain_text, status: .properties["状态"].status.name, priority: .properties["优先级"].select.name}'
 
 # Filter by priority
+PRIORITY="高"
+printf '{"filter":{"property":"优先级","select":{"equals":"%s"}}}' "$PRIORITY" | \
 curl -s -X POST "https://api.notion.com/v1/databases/2fe57052b4908022bde6f836bff39869/query" \
   -H "Authorization: Bearer $NOTION_API_TOKEN" \
   -H "Notion-Version: 2022-06-28" \
   -H "Content-Type: application/json" \
-  -d '{
-    "filter": {
-      "property": "优先级",
-      "select": {"equals": "高"}
-    }
-  }' | jq '.results[] | {id, name: .properties["项目名称"].title[0].plain_text, status: .properties["状态"].status.name}'
+  --data-binary @- | jq '.results[] | {id, name: .properties["项目名称"].title[0].plain_text, status: .properties["状态"].status.name}'
 
 # Filter by department
+DEPT="系统建设部"
+printf '{"filter":{"property":"部门","multi_select":{"contains":"%s"}}}' "$DEPT" | \
 curl -s -X POST "https://api.notion.com/v1/databases/2fe57052b4908022bde6f836bff39869/query" \
   -H "Authorization: Bearer $NOTION_API_TOKEN" \
   -H "Notion-Version: 2022-06-28" \
   -H "Content-Type: application/json" \
-  -d '{
-    "filter": {
-      "property": "部门",
-      "multi_select": {"contains": "系统建设部"}
-    }
-  }' | jq '.results[] | {id, name: .properties["项目名称"].title[0].plain_text, status: .properties["状态"].status.name}'
+  --data-binary @- | jq '.results[] | {id, name: .properties["项目名称"].title[0].plain_text, status: .properties["状态"].status.name}'
 
 # Compound filter (status AND priority)
+printf '{"filter":{"and":[{"property":"状态","status":{"equals":"进行中"}},{"property":"优先级","select":{"equals":"高"}}]}}' | \
 curl -s -X POST "https://api.notion.com/v1/databases/2fe57052b4908022bde6f836bff39869/query" \
   -H "Authorization: Bearer $NOTION_API_TOKEN" \
   -H "Notion-Version: 2022-06-28" \
   -H "Content-Type: application/json" \
-  -d '{
-    "filter": {
-      "and": [
-        {"property": "状态", "status": {"equals": "进行中"}},
-        {"property": "优先级", "select": {"equals": "高"}}
-      ]
-    }
-  }' | jq '.results[] | {id, name: .properties["项目名称"].title[0].plain_text}'
+  --data-binary @- | jq '.results[] | {id, name: .properties["项目名称"].title[0].plain_text}'
 ```
 
 ### 2. SEARCH Requirements by Name
